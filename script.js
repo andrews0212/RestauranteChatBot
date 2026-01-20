@@ -14,7 +14,8 @@ const CONFIG = {
     
     // 🔧 CREDENCIALES DE AZURE (desde variables de entorno de Azure Static Web Apps)
     // Estas se configuran en GitHub Secrets y se inyectan automáticamente
-    endpoint: window.ENV?.CHATBOT_ENDPOINT || 'YOUR_ENDPOINT_HERE',
+    // Eliminar cualquier "/" al final del endpoint para evitar doble slash
+    endpoint: (window.ENV?.CHATBOT_ENDPOINT || 'YOUR_ENDPOINT_HERE').replace(/\/+$/, ''),
     apiKey: window.ENV?.CHATBOT_KEY || 'YOUR_API_KEY_HERE',
     deploymentName: window.ENV?.CHATBOT_DEPLOYMENT || 'restauranteDesploy',
     projectName: 'Restaurante', // Nombre del proyecto CLU en Azure
