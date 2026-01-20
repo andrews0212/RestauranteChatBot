@@ -19,6 +19,21 @@ jobs:
         with:
           submodules: true
           lfs: false
+      
+      # Generar archivo env.js con las variables de entorno
+      - name: Generate env.js
+        run: |
+          echo "Generating env.js with environment variables..."
+          cat > env.js << 'EOF'
+          window.ENV = {
+              CHATBOT_ENDPOINT: "${{ secrets.CHATBOT_ENDPOINT }}",
+              CHATBOT_KEY: "${{ secrets.CHATBOT_KEY }}",
+              CHATBOT_DEPLOYMENT: "${{ secrets.CHATBOT_DEPLOYMENT || 'production' }}"
+          };
+          EOF
+          cat env.js
+        shell: bash
+      
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1

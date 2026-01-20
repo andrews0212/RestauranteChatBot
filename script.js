@@ -1,12 +1,25 @@
-// Configuración del Azure Language Service
+// ========================================
+// CONFIGURACIÓN DEL CHATBOT
+// ========================================
+
+// MODO ACTUAL: Detecta automáticamente si hay variables de entorno de Azure
+// Si están disponibles, usa Azure. Si no, usa modo DEMO.
+
 const CONFIG = {
-    // Endpoint del servicio de Azure Language (se obtiene de las variables de entorno o configuración)
-    endpoint: 'YOUR_ENDPOINT_HERE', // Reemplazar con tu endpoint
-    apiKey: 'YOUR_API_KEY_HERE', // Reemplazar con tu API key
-    deploymentName: 'YOUR_DEPLOYMENT_NAME', // Nombre del deployment/proyecto
+    // ⚙️ MODO DE OPERACIÓN
+    // Detecta automáticamente: si hay variables de entorno, usa Azure; si no, modo demo
+    useDemoMode: !(window.ENV?.CHATBOT_ENDPOINT && 
+                   window.ENV?.CHATBOT_ENDPOINT !== "{{ CHATBOT_ENDPOINT }}" &&
+                   window.ENV?.CHATBOT_ENDPOINT !== ""),
     
-    // Para Azure OpenAI o Conversational Language Understanding
-    useConversationalLanguage: true // true para CLU, false para Azure OpenAI
+    // 🔧 CREDENCIALES DE AZURE (desde variables de entorno de Azure Static Web Apps)
+    // Estas se configuran en GitHub Secrets y se inyectan automáticamente
+    endpoint: window.ENV?.CHATBOT_ENDPOINT || 'YOUR_ENDPOINT_HERE',
+    apiKey: window.ENV?.CHATBOT_KEY || 'YOUR_API_KEY_HERE',
+    deploymentName: window.ENV?.CHATBOT_DEPLOYMENT || 'YOUR_PROJECT_NAME',
+    
+    // 🤖 TIPO DE SERVICIO DE AZURE
+    useConversationalLanguage: true // true = CLU, false = Azure OpenAI
 };
 
 // Elementos del DOM
@@ -37,8 +50,13 @@ async function handleSubmit(e) {
     showTypingIndicator();
     
     try {
-        // Enviar mensaje al servicio de Azure
-        const response = await sendMessageToAzure(message);
+        // Enviar mensaje (modo demo o Azure según configuración)
+        let response;
+        if (CONFIG.useDemoMode) {
+            response = getDemoResponse(message);
+        } else {
+            response = await sendMessageToAzure(message);
+        }
         
         // Agregar respuesta del bot
         addMessage(response, 'bot');
@@ -284,9 +302,27 @@ function getDemoResponse(message) {
     return 'Puedo ayudarte con:\n• Información del menú\n• Horarios de atención\n• Realizar reservaciones\n• Ubicación y contacto\n• Precios\n\n¿Qué necesitas saber?';
 }
 
-// Inicialización
-console.log('ChatBot inicializado');
-console.log('Endpoint:', CONFIG.endpoint);
+// ========================================
+// INICIALIZACIÓN DEL CHATBOT
+// ========================================
+console.log('🤖 ChatBot Restaurante Inicializado');
+console.log('📍 Modo:', CONFIG.useDemoMode ? 'DEMO (sin Azure)' : 'PRODUCCIÓN (con Azure)');
 
-// Para desarrollo: descomentar para usar respuestas de demo
-// sendMessageToAzure = getDemoResponse;
+if (!CONFIG.useDemoMode) {
+    console.log('🔗 Endpoint:', CONFIG.endpoint);
+    console.log('🎯 Deployment:', CONFIG.deploymentName);
+    console.log('⚙️ Servicio:', CONFIG.useConversationalLanguage ? 'Conversational Language' : 'Azure OpenAI');
+    
+    // Validar configuración
+    if (CONFIG.endpoint === 'YOUR_ENDPOINT_HERE' || CONFIG.apiKey === 'YOUR_API_KEY_HERE') {
+        console.warn('⚠️ ADVERTENCIA: Credenciales de Azure no configuradas.');
+        console.warn('💡 El chatbot funcionará en modo DEMO. Para usar Azure:');
+        console.warn('   1. Abre script.js');
+        console.warn('   2. Cambia useDemoMode a false');
+        console.warn('   3. Completa endpoint, apiKey y deploymentName');
+    }
+} else {
+    console.log('✅ Modo DEMO activo - El chatbot usa respuestas predefinidas');
+    console.log('💡 Para conectar con Azure, cambia CONFIG.useDemoMode a false en script.js');
+}
+
