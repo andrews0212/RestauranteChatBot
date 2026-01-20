@@ -153,7 +153,7 @@ async function sendMessageToAzure(message) {
 
 // Opción 1: Azure Conversational Language Understanding (CLU)
 async function sendToConversationalLanguage(message) {
-    const url = `${CONFIG.endpoint}/language/:analyze-conversations?api-version=2022-10-01-preview`;
+    const url = `${CONFIG.endpoint}/language/:analyze-conversations?api-version=2024-11-15-preview`;
     
     const requestBody = {
         kind: "Conversation",
@@ -165,11 +165,14 @@ async function sendToConversationalLanguage(message) {
             }
         },
         parameters: {
-            projectName: CONFIG.deploymentName,
-            deploymentName: "production", // o tu nombre de deployment
+            projectName: "Restaurante",  // Nombre del proyecto (con mayúscula)
+            deploymentName: "restauranteDesploy",  // Nombre exacto del deployment (con "s")
             stringIndexType: "TextElement_V8"
         }
     };
+    
+    console.log('🔗 Enviando a CLU:', url);
+    console.log('📦 Request Body:', requestBody);
     
     try {
         const response = await fetch(url, {
@@ -181,16 +184,21 @@ async function sendToConversationalLanguage(message) {
             body: JSON.stringify(requestBody)
         });
         
+        console.log('📡 Response status:', response.status);
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('❌ Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
         
         const data = await response.json();
+        console.log('✅ Response data:', data);
         
         // Procesar la respuesta según tu configuración de CLU
         return processConversationalResponse(data);
     } catch (error) {
-        console.error('Error en CLU:', error);
+        console.error('❌ Error en CLU:', error);
         throw error;
     }
 }
@@ -246,12 +254,17 @@ async function sendToAzureOpenAI(message) {
 // Procesar respuesta de Conversational Language
 function processConversationalResponse(data) {
     try {
+        console.log('📊 Procesando respuesta de CLU:', data);
+        
         // Esta función depende de cómo hayas configurado tu proyecto CLU
         const prediction = data.result.prediction;
         
         // Si tienes intenciones configuradas
         const topIntent = prediction.topIntent;
-        const entities = prediction.entities;
+        const entities = prediction.entities || [];
+        
+        console.log('🎯 Intent detectado:', topIntent);
+        console.log('📋 Entities:', entities);
         
         // Generar respuesta basada en la intención
         return generateResponseFromIntent(topIntent, entities, prediction);
@@ -263,19 +276,154 @@ function processConversationalResponse(data) {
 
 // Generar respuesta basada en intenciones (personalizar según tu proyecto)
 function generateResponseFromIntent(intent, entities, prediction) {
-    // Ejemplo de respuestas basadas en intenciones
+    console.log('🔍 Generando respuesta para intent:', intent);
+    
+    // Respuestas basadas en las intenciones de tu proyecto Azure CLU
     const responses = {
-        'MenuInfo': 'Nuestro menú incluye una variedad de platillos deliciosos. ¿Te gustaría saber sobre alguna categoría específica como entradas, platos principales o postres?',
-        'Horarios': 'Estamos abiertos de lunes a domingo:\n- Lunes a viernes: 12:00 PM - 11:00 PM\n- Sábados y domingos: 11:00 AM - 12:00 AM',
-        'Reservacion': 'Para hacer una reservación, por favor llama al (123) 456-7890 o envíanos un email a reservas@restaurante.com. ¿Para cuántas personas y qué fecha?',
-        'Ubicacion': 'Nos encontramos en Av. Principal 123, Ciudad. Tenemos estacionamiento disponible.',
-        'None': 'Puedo ayudarte con información sobre nuestro menú, horarios, reservaciones o ubicación. ¿Qué te gustaría saber?'
+        // === INTENTS DE CONVERSACIÓN ===
+        'Saludo': '¡Hola! 👋 Bienvenido al restaurante. ¿En qué puedo ayudarte hoy?',
+        
+        'Despedida': '¡Gracias por contactarnos! 😊 Esperamos verte pronto. ¡Que tengas un excelente día!',
+        
+        'Confirmar': '¡Perfecto! ¿En qué más puedo ayudarte?',
+        
+        'Negar': 'Entiendo. ¿Hay algo más en lo que pueda asistirte?',
+        
+        // === INTENTS DEL MENÚ ===
+        'MenuInfo': 'Nuestro menú incluye:\n\n🥗 Entradas: Ensalada, Bruschetta, Sopa\n🍝 Platos principales: Pasta, Pizza, Hamburguesa, Carnes, Pescados\n🍰 Postres: Tiramisú, Cheesecake, Helado\n☕ Bebidas: Refrescos, Vino, Cerveza\n\n¿Te gustaría saber más sobre alguna categoría?',
+        
+        // === INTENTS DE INFORMACIÓN ===
+        'Horarios': 'Nuestro horario de atención:\n• Lunes a viernes: 12:00 PM - 11:00 PM\n• Sábados y domingos: 11:00 AM - 12:00 AM\n\n¡Te esperamos!',
+        
+        'Ubicacion': 'Nos encontramos en:\n📍 Av. Principal 123, Centro, Ciudad\n\n✅ Estacionamiento gratuito\n✅ Acceso para sillas de ruedas\n✅ Terraza disponible',
+        
+        // === INTENTS DE PEDIDOS Y RESERVACIONES ===
+        'RealizarPedido': '¡Perfecto! Para realizar tu pedido:\n• 📞 Llámanos: (123) 456-7890\n• 🌐 En línea: www.restaurante.com/pedidos\n• 🛵 Delivery: Uber Eats, Rappi, DiDi Food\n\n¿Qué te gustaría ordenar?',
+        
+        'Reservacion': 'Para reservar una mesa:\n• 📞 Teléfono: (123) 456-7890\n• � Email: reservas@restaurante.com\n• 💬 WhatsApp: (123) 456-7890\n\n¿Para cuántas personas y qué día?',
+        
+        'CancelarPedido': 'Para cancelar tu pedido:\n• Llámanos al: (123) 456-7890\n• Envía un WhatsApp: (123) 456-7890\n• Email: pedidos@restaurante.com\n\nPor favor indica tu número de pedido.',
+        
+        'ConsultarEstadoPedido': 'Para consultar el estado de tu pedido:\n• Llámanos: (123) 456-7890\n• WhatsApp: (123) 456-7890\n• Revisa tu email de confirmación\n\n¿Cuál es tu número de pedido?',
+        
+        'SolicitarRecomendacion': '¡Con gusto te recomiendo! 🌟\n\nNuestros platos más populares:\n• 🍕 Pizza Margarita - Clásica y deliciosa\n• 🍝 Pasta Alfredo - Cremosa y suave\n• 🍔 Hamburguesa de la casa - Jugosa y completa\n• 🥩 Filete de res - Término perfecto\n\n¿Qué tipo de comida prefieres?',
+        
+        // === OTROS INTENTS ===
+        'ConversationItem': 'Puedo ayudarte con información sobre nuestro menú, horarios, reservaciones, pedidos o ubicación. ¿Qué te gustaría saber?',
+        
+        'None': 'Puedo ayudarte con:\n• 🍽️ Información del menú\n• ⏰ Horarios de atención\n• 📅 Reservaciones\n• 🛵 Realizar pedidos\n• � Consultar estado de pedido\n• ❌ Cancelar pedido\n• 💡 Recomendaciones\n• 📍 Ubicación\n\n¿Qué necesitas saber?'
     };
     
-    return responses[intent] || responses['None'];
+    // Si el intent no está en el diccionario, devolver respuesta genérica
+    if (!responses[intent]) {
+        console.warn(`⚠️ Intent '${intent}' no tiene respuesta configurada`);
+        return responses['None'];
+    }
+    
+    return responses[intent];
 }
 
-// Función de ejemplo para modo offline/demo (opcional)
+// Generar respuesta basada en intenciones (personalizar según tu proyecto)
+function generateResponseFromIntent(intent, entities, prediction) {
+    console.log('🔍 Generando respuesta para intent:', intent);
+    console.log('📦 Entities detectadas:', entities);
+    
+    // === PROCESAR ENTITIES (PLATOS ESPECÍFICOS) ===
+    const detectedPlates = [];
+    if (entities && entities.length > 0) {
+        entities.forEach(entity => {
+            if (entity.category === 'Plato') {
+                detectedPlates.push(entity.text);
+            }
+        });
+    }
+    
+    // Si se detectaron platos específicos, personalizar la respuesta
+    if (detectedPlates.length > 0) {
+        return handlePlateResponse(intent, detectedPlates);
+    }
+    
+    // Respuestas basadas en las intenciones de tu proyecto Azure CLU
+    const responses = {
+        'Saludo': '¡Hola! 👋 Bienvenido al restaurante. ¿En qué puedo ayudarte hoy?',
+        'Despedida': '¡Gracias por contactarnos! 😊 Esperamos verte pronto. ¡Que tengas un excelente día!',
+        'Confirmar': '¡Perfecto! ¿Hay algo más que necesites?',
+        'Negar': 'Entiendo. ¿Te gustaría ver otras opciones?',
+        'MenuInfo': 'Nuestro menú incluye:\n\n🥗 Entradas: Ensalada, Bruschetta, Sopa\n🍝 Platos principales: Pasta, Pizza, Hamburguesa, Carnes, Pescados\n🍰 Postres: Tiramisú, Cheesecake, Helado\n☕ Bebidas: Refrescos, Vino, Cerveza\n\n¿Qué te gustaría saber más sobre alguna categoría?',
+        'Horarios': 'Nuestro horario de atención:\n• Lunes a viernes: 12:00 PM - 11:00 PM\n• Sábados y domingos: 11:00 AM - 12:00 AM\n\n¡Te esperamos!',
+        'Ubicacion': 'Nos encontramos en:\n📍 Av. Principal 123, Centro, Ciudad\n\n✅ Estacionamiento gratuito\n✅ Acceso para sillas de ruedas\n✅ Terraza disponible',
+        'RealizarPedido': '¡Excelente! Para confirmar:\n\n📞 Llámanos: (123) 456-7890\n🌐 En línea: www.restaurante.com\n🛵 Delivery disponible\n\n¿Necesitas algo más?',
+        'Reservacion': 'Para reservar mesa:\n• 📞 Teléfono: (123) 456-7890\n• 📧 Email: reservas@restaurante.com\n• 💬 WhatsApp: (123) 456-7890\n\n¿Para cuántas personas?',
+        'CancelarPedido': 'Para cancelar:\n• Llámanos: (123) 456-7890\n• WhatsApp: (123) 456-7890\n\nIndícanos tu número de pedido.',
+        'ConsultarEstadoPedido': 'Para consultar tu pedido:\n• Llama al: (123) 456-7890\n• Revisa tu email de confirmación\n\n¿Tienes tu número de pedido?',
+        'SolicitarRecomendacion': '¡Con gusto! 🌟 Te recomiendo:\n\n🍕 Pizza Margarita\n🍝 Pasta Alfredo\n🍔 Hamburguesa BBQ\n\n¿Cuál te llama más la atención?',
+        'ConversationItem': 'Puedo ayudarte con menú, horarios, reservaciones o pedidos. ¿Qué necesitas?',
+        'None': '¿En qué puedo ayudarte?\n• 🍽️ Ver el menú\n• ⏰ Horarios\n• 📅 Reservar\n• 🛵 Pedir'
+    };
+    
+    if (!responses[intent]) {
+        console.warn(`⚠️ Intent '${intent}' no tiene respuesta configurada`);
+        return responses['None'];
+    }
+    
+    return responses[intent];
+}
+
+// Nueva función para manejar respuestas personalizadas por plato
+function handlePlateResponse(intent, plates) {
+    console.log('🍽️ Platos detectados:', plates);
+    
+    // Información detallada de cada plato
+    const plateInfo = {
+        // PIZZAS
+        'pizza': '🍕 **Pizzas**\n• Margarita: $150\n• Pepperoni: $180\n• Cuatro Quesos: $200\n\n¿Cuál te gusta?',
+        'margarita': '🍕 **Pizza Margarita** - $150\nTomate, mozzarella, albahaca\n¿La ordenamos?',
+        'pepperoni': '🍕 **Pizza Pepperoni** - $180\nSalsa, mozzarella, pepperoni\n¿Te gustaría pedirla?',
+        'cuatro quesos': '🍕 **Pizza Cuatro Quesos** - $200\nMozzarella, parmesano, gorgonzola, fontina\n¿La preparamos?',
+        
+        // ENSALADAS
+        'ensalada': '🥗 **Ensaladas**\n• César: $120\n• Mixta: $100\n• Griega: $130\n\n¿Cuál prefieres?',
+        'cesar': '🥗 **Ensalada César** - $120\nLechuga, crutones, parmesano\n¿Te la preparo?',
+        'mixta': '🥗 **Ensalada Mixta** - $100\nLechuga, tomate, cebolla, zanahoria\n¿La pedimos?',
+        'griega': '🥗 **Ensalada Griega** - $130\nTomate, pepino, queso feta, aceitunas\n¿Te gusta?',
+        
+        // HAMBURGUESAS
+        'hamburguesa': '🍔 **Hamburguesas**\n• Clásica: $180\n• BBQ: $200\n• Completa: $220\n\nCon papas fritas. ¿Cuál quieres?',
+        'clasica': '🍔 **Hamburguesa Clásica** - $180\nCarne, lechuga, tomate, queso\n¿La ordenamos?',
+        'bbq': '🍔 **Hamburguesa BBQ** - $200\nCarne, salsa BBQ, cebolla caramelizada\n¿Te la preparo?',
+        'completa': '🍔 **Hamburguesa Completa** - $220\nDoble carne, queso, bacon, huevo\n¿La pedimos?',
+        
+        // POSTRES
+        'postre': '🍰 **Postres**\n• Tiramisú: $90\n• Cheesecake: $85\n• Brownie: $75\n\n¿Cuál te provoca?',
+        'tiramisu': '🍰 **Tiramisú** - $90\nPostre italiano con café\n¿Lo pedimos?',
+        'cheesecake': '🍰 **Cheesecake** - $85\nCremoso pastel de queso\n¿Te lo traigo?',
+        'brownie': '🍰 **Brownie** - $75\nChocolate con helado\n¿Lo ordenamos?',
+        
+        // BEBIDAS
+        'bebida': '☕ **Bebidas**\n• Refrescos: $35\n• Agua: $25\n• Cerveza: $50\n• Vino: $120+\n\n¿Qué tomas?',
+        'agua': '💧 **Agua** - $25\nNatural o mineral',
+        'coca': '🥤 **Coca-Cola** - $35\nRegular, Zero o Light',
+        'refresco': '🥤 **Refrescos** - $35\nCoca, Sprite, Fanta\n¿Cuál?',
+        'cerveza': '🍺 **Cerveza** - $50\nNacional o importada',
+        'vino': '🍷 **Vino** - $120+\nTinto, blanco o rosado'
+    };
+    
+    // Construir respuesta personalizada
+    let response = '';
+    plates.forEach((plate, index) => {
+        const plateLower = plate.toLowerCase();
+        const info = plateInfo[plateLower] || `${plate} - ¡Excelente elección!`;
+        response += info;
+        if (index < plates.length - 1) response += '\n\n';
+    });
+    
+    // Agregar call-to-action según el intent
+    if (intent === 'RealizarPedido') {
+        response += '\n\n✅ Para confirmar:\n📞 (123) 456-7890';
+    }
+    
+    return response;
+}
 function getDemoResponse(message) {
     const lowerMessage = message.toLowerCase();
     
