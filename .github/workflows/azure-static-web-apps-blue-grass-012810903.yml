@@ -26,8 +26,8 @@ jobs:
           echo "Generating env.js with environment variables..."
           cat > env.js << 'EOF'
           window.ENV = {
-              CHATBOT_ENDPOINT: "${{ secrets.CHATBOT_ENDPOINT }}",
-              CHATBOT_KEY: "${{ secrets.CHATBOT_KEY }}",
+              CHATBOT_ENDPOINT: "${{ secrets.CHAT_ENDPOINT }}",
+              CHATBOT_KEY: "${{ secrets.CHAT_KEY }}",
               CHATBOT_DEPLOYMENT: "${{ secrets.CHATBOT_DEPLOYMENT || 'production' }}"
           };
           EOF
@@ -39,8 +39,8 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         # AQUI AGREGAMOS LAS VARIABLES DE ENTORNO
         env:
-          CHATBOT_ENDPOINT: ${{ secrets.CHATBOT_ENDPOINT }}
-          CHATBOT_KEY: ${{ secrets.CHATBOT_KEY }}
+          CHAT_ENDPOINT: ${{ secrets.CHAT_ENDPOINT }}
+          CHAT_KEY: ${{ secrets.CHAT_KEY }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLUE_GRASS_012810903 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
