@@ -25,13 +25,17 @@ jobs:
       - name: Generate env.js
         run: |
           echo "Generating env.js with environment variables..."
+          echo "CHATBOT_ENDPOINT value: ${{ secrets.CHATBOT_ENDPOINT }}"
+          echo "CHATBOT_KEY exists: ${{ secrets.CHATBOT_KEY != '' }}"
+          echo "CHATBOT_DEPLOYMENT value: ${{ secrets.CHATBOT_DEPLOYMENT }}"
           cat > env.js << 'EOF'
           window.ENV = {
               CHATBOT_ENDPOINT: "${{ secrets.CHATBOT_ENDPOINT }}",
               CHATBOT_KEY: "${{ secrets.CHATBOT_KEY }}",
-              CHATBOT_DEPLOYMENT: "${{ secrets.CHATBOT_DEPLOYMENT || 'production' }}"
+              CHATBOT_DEPLOYMENT: "${{ secrets.CHATBOT_DEPLOYMENT }}"
           };
           EOF
+          echo "Generated env.js content:"
           cat env.js
         shell: bash
       

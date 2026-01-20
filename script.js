@@ -30,6 +30,28 @@ const userInput = document.getElementById('userInput');
 const sendButton = document.getElementById('sendButton');
 const typingIndicator = document.getElementById('typingIndicator');
 
+// 🔍 DIAGNÓSTICO: Mostrar configuración al cargar
+console.log('=== DIAGNÓSTICO DE CONFIGURACIÓN ===');
+console.log('window.ENV:', window.ENV);
+console.log('CONFIG.endpoint:', CONFIG.endpoint);
+console.log('CONFIG.apiKey:', CONFIG.apiKey ? '✓ Configurada' : '✗ FALTA');
+console.log('CONFIG.deploymentName:', CONFIG.deploymentName);
+console.log('CONFIG.projectName:', CONFIG.projectName);
+console.log('CONFIG.useDemoMode:', CONFIG.useDemoMode);
+console.log('===================================');
+
+// Mostrar estado en la interfaz
+const configStatus = document.getElementById('configStatus');
+if (configStatus) {
+    if (CONFIG.useDemoMode) {
+        configStatus.innerHTML = '⚠️ Modo: DEMO (sin Azure) - Endpoint: ' + (window.ENV?.CHATBOT_ENDPOINT || 'no configurado');
+        configStatus.style.background = 'rgba(255,193,7,0.2)';
+    } else {
+        configStatus.innerHTML = '✅ Modo: Azure CLU - Endpoint: ' + CONFIG.endpoint;
+        configStatus.style.background = 'rgba(76,175,80,0.2)';
+    }
+}
+
 // Historial de conversación
 let conversationHistory = [];
 
