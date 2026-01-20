@@ -1,0 +1,16 @@
+# Archivos de configuración con credenciales
+config.js
+
+# Node modules (si usas npm)
+node_modules/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de VS Code
+.vscode/
+
+# Variables de entorno
+.env
+.env.local
