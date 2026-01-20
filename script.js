@@ -16,7 +16,8 @@ const CONFIG = {
     // Estas se configuran en GitHub Secrets y se inyectan automáticamente
     endpoint: window.ENV?.CHATBOT_ENDPOINT || 'YOUR_ENDPOINT_HERE',
     apiKey: window.ENV?.CHATBOT_KEY || 'YOUR_API_KEY_HERE',
-    deploymentName: window.ENV?.CHATBOT_DEPLOYMENT || 'YOUR_PROJECT_NAME',
+    deploymentName: window.ENV?.CHATBOT_DEPLOYMENT || 'restauranteDesploy',
+    projectName: 'Restaurante', // Nombre del proyecto CLU en Azure
     
     // 🤖 TIPO DE SERVICIO DE AZURE
     useConversationalLanguage: true // true = CLU, false = Azure OpenAI
@@ -161,12 +162,16 @@ async function sendToConversationalLanguage(message) {
             conversationItem: {
                 id: "1",
                 participantId: "user",
-                text: message
+                text: message,
+                modality: "text",
+                language: "es",
+                participantId: "user"
             }
         },
         parameters: {
-            projectName: "Restaurante",  // Nombre del proyecto (con mayúscula)
-            deploymentName: "restauranteDesploy",  // Nombre exacto del deployment (con "s")
+            projectName: CONFIG.projectName,
+            deploymentName: CONFIG.deploymentName,
+            verbose: true,
             stringIndexType: "TextElement_V8"
         }
     };
