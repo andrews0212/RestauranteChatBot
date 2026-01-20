@@ -28,15 +28,19 @@ jobs:
           echo "CHATBOT_ENDPOINT value: ${{ secrets.CHATBOT_ENDPOINT }}"
           echo "CHATBOT_KEY exists: ${{ secrets.CHATBOT_KEY != '' }}"
           echo "CHATBOT_DEPLOYMENT value: ${{ secrets.CHATBOT_DEPLOYMENT }}"
-          cat > env.js << 'EOF'
+          cat > env.js << EOF
+          // Generated automatically during build
           window.ENV = {
               CHATBOT_ENDPOINT: "${{ secrets.CHATBOT_ENDPOINT }}",
               CHATBOT_KEY: "${{ secrets.CHATBOT_KEY }}",
               CHATBOT_DEPLOYMENT: "${{ secrets.CHATBOT_DEPLOYMENT }}"
           };
+          console.log('env.js loaded from build with endpoint:', window.ENV.CHATBOT_ENDPOINT);
           EOF
           echo "Generated env.js content:"
           cat env.js
+          echo "Listing files in root:"
+          ls -la
         shell: bash
       
       - name: Build And Deploy
