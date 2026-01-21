@@ -15,12 +15,12 @@ Settings → Secrets and variables → Actions → New repository secret
 
 ### Agrega estos 3 secretos:
 
-#### Secret 1: CHAT_ENDPOINT
-- **Name:** `CHAT_ENDPOINT`
+#### Secret 1: CHATBOT_ENDPOINT
+- **Name:** `CHATBOT_ENDPOINT`
 - **Value:** Tu endpoint de Azure (ejemplo: `https://tu-recurso.cognitiveservices.azure.com`)
 
-#### Secret 2: CHAT_KEY
-- **Name:** `CHAT_KEY`
+#### Secret 2: CHATBOT_KEY
+- **Name:** `CHATBOT_KEY`
 - **Value:** Tu API Key de Azure Language Service
 
 #### Secret 3: CHATBOT_DEPLOYMENT
